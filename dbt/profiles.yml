@@ -1,0 +1,6 @@
+fpuna_datos_barchello:
+  outputs:
+    dev:
+      type: duckdb
+      path: "md:airbyte_curso?motherduck_token={{ env_var('MOTHERDUCK_TOKEN') }}"
+  target: dev

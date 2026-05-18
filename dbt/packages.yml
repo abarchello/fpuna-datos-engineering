@@ -1,0 +1,6 @@
+# dbt-expectations requiere acceso a hub.getdbt.com o GitHub
+# Para instalar: ejecutar desde una red sin proxy o con VPN
+# dbt deps  (una vez desbloqueada la red)
+packages:
+  - package: metaplane/dbt_expectations
+    version: [">=0.10.0", "<0.11.0"]

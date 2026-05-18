@@ -1,0 +1,154 @@
+version: 2
+
+models:
+  - name: mart_pokemon_analytics
+    description: "One Big Table con todas las metricas y clasificaciones de Pokemon. Tests de unique con severity warn por la dinamica de Append mode en Airbyte."
+    columns:
+      - name: pokemon_id
+        description: "ID unico del pokemon"
+        tests:
+          - unique:
+              config:
+                severity: warn
+          - not_null
+      - name: total_base_stats
+        description: "Suma de todas las estadisticas base"
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1200
+      - name: power_tier
+        tests:
+          - accepted_values:
+              values: ['legendary_tier', 'strong', 'average', 'weak']
+              config:
+                severity: warn
+      - name: primary_type
+        tests:
+          - not_null:
+              config:
+                severity: warn
+
+  - name: mart_github_summary
+    description: "Resumen mensual de actividad del repositorio GitHub"
+    columns:
+      - name: activity_month
+        tests:
+          - not_null
+      - name: total_activities
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100000
+
+  - name: fct_daily_sales
+    description: "Metricas diarias de ventas del ecommerce"
+    columns:
+      - name: date
+        tests:
+          - unique
+          - not_null
+      - name: conversion_rate_pct
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100
+
+  - name: fct_channel_performance
+    description: "Performance por canal y dispositivo mensual"
+    columns:
+      - name: session_month
+        tests:
+          - not_null
+      - name: utm_source
+        tests:
+          - not_null
+
+  - name: fct_product_performance
+    description: "Performance de ventas por producto y mes"
+    columns:
+      - name: product_id
+        tests:
+          - not_null
+      - name: margin_pct
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -100
+              max_value: 100
+
+  - name: mart_hidro_calidad
+    description: |
+      Monitoreo diario de la calidad de los datos hidrometricos por estacion.
+      Permite la TRAZABILIDAD de las transformaciones de limpieza aplicadas
+      en stg_hidro_mediciones: cuantifica cuantos outliers se descartaron
+      por metrica, calcula la tasa porcentual de outliers y clasifica cada
+      dia segun nivel de calidad (optima / buena / regular / mala).
+
+      Casos de uso:
+        - Auditoria de calidad de datos del API institucional
+        - Identificacion de periodos de descalibracion de sensores
+        - Reporte de confiabilidad en el dashboard final
+    columns:
+      - name: estacion
+        tests:
+          - not_null
+      - name: fecha_dia
+        tests:
+          - not_null
+      - name: tasa_outliers_pct
+        description: "Porcentaje de lecturas descartadas como outlier sobre el total esperado del dia."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100
+              row_condition: "tasa_outliers_pct is not null"
+      - name: nivel_calidad
+        tests:
+          - accepted_values:
+              values: ['optima', 'buena', 'regular', 'mala']
+
+  - name: mart_hidro_resumen
+    description: "OBT analitica de mediciones hidrometricas diarias por estacion (Itabo Guazu + Pozuelo Puente). Incluye metricas de nivel del agua y calidad (pH, turbidez, OD, conductividad, temperatura) con clasificaciones y alertas."
+    columns:
+      - name: estacion
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Itabó Guazú', 'Pozuelo Puente']
+      - name: fecha_dia
+        tests:
+          - not_null
+      - name: condicion_nivel
+        tests:
+          - accepted_values:
+              values: ['crecida', 'alto', 'normal', 'bajo', 'bajante', 'sin_datos', 'sin_referencia']
+      - name: condicion_ph
+        tests:
+          - accepted_values:
+              values: ['acido', 'normal', 'alcalino', 'sin_datos']
+      - name: condicion_turbidez
+        tests:
+          - accepted_values:
+              values: ['clara', 'turbia', 'muy_turbia', 'sin_datos']
+      - name: condicion_od
+        tests:
+          - accepted_values:
+              values: ['saludable', 'bajo', 'critico', 'sin_datos']
+
+  - name: obt_orders_enriched
+    description: "Ordenes con contexto completo de sesion y producto. Test unique en order_id con severity warn por duplicados que vienen del modo Append de Airbyte cuando hay re-syncs."
+    columns:
+      - name: order_id
+        tests:
+          - unique:
+              config:
+                severity: warn
+          - not_null
+      - name: price_usd
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 10000

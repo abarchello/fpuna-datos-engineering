@@ -1,0 +1,55 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Datos crudos extraidos via Airbyte en MotherDuck"
+    database: airbyte_curso
+    schema: main
+    tables:
+      # PokeAPI
+      - name: pokemon
+        description: "Datos de Pokemon extraidos de PokeAPI"
+
+      # GitHub - TheAlgorithms/Python
+      - name: issues
+        description: "Issues del repositorio GitHub"
+      - name: pull_requests
+        description: "Pull Requests del repositorio GitHub"
+      - name: branches
+        description: "Branches del repositorio GitHub"
+      - name: repositories
+        description: "Metadatos del repositorio GitHub"
+      - name: stargazers
+        description: "Usuarios que marcaron el repo con estrella"
+
+      # CoinGecko
+      - name: market_chart
+        description: "Historial de precios de criptomonedas"
+
+  - name: ecommerce
+    description: "Datos de MySQL Ecommerce via Airbyte (Maven Fuzzy Factory)"
+    database: airbyte_curso
+    schema: main
+    tables:
+      - name: website_sessions
+        description: "Sesiones de usuarios en el sitio web"
+      - name: website_pageviews
+        description: "Paginas visitadas por sesion"
+      - name: products
+        description: "Catalogo de productos"
+      - name: orders
+        description: "Ordenes realizadas"
+      - name: order_items
+        description: "Items individuales dentro de cada orden"
+      - name: order_item_refunds
+        description: "Reembolsos procesados"
+
+  - name: hidro
+    description: "Datos hidrométricos institucionales (Trabajo Final). Mediciones de estaciones automáticas con sensores de nivel + parámetros de calidad de agua (conductividad, pH, turbidez, oxígeno disuelto, temperatura) cada ~20 minutos."
+    database: airbyte_curso
+    schema: main
+    tables:
+      - name: hidro_estacion_itabo_guazu
+        description: "Mediciones de la estación automática Itabó Guazú (id 134). Operativa entre nov-2018 y mar-2025."
+      - name: hidro_estacion_pozuelo_puente
+        description: "Mediciones de la estación automática Pozuelo Puente (id 236). Operativa desde abr-2021 hasta la fecha."

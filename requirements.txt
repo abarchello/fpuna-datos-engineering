@@ -1,0 +1,11 @@
+dbt-duckdb>=1.7.0
+prefect>=2.14.0
+httpx>=0.27.0
+prefect-dbt>=0.4.0
+python-dotenv>=1.0.0
+# Pin mashumaro para evitar incompatibilidad con Python 3.14
+mashumaro>=3.20
+# Para generación de documentos Word (Tarea 4, 7 y Trabajo Final)
+python-docx>=1.1.0
+# Para leer la grilla de evaluación XLSX
+openpyxl>=3.1.0

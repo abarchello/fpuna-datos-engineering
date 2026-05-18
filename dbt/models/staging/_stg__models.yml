@@ -1,0 +1,218 @@
+version: 2
+
+models:
+  - name: stg_pokemon
+    description: "Pokemon limpiados y tipados desde PokeAPI. Nota: los duplicados de pokemon_id pueden ocurrir cuando se hacen varios syncs en modo Append en Airbyte (cada sync agrega una nueva fila del mismo pokemon); por eso el test unique esta como warn en lugar de error."
+    columns:
+      - name: pokemon_id
+        description: "ID unico del pokemon en PokeAPI"
+        tests:
+          - unique:
+              config:
+                severity: warn
+          - not_null
+      - name: pokemon_name
+        description: "Nombre del pokemon"
+        tests:
+          - not_null
+      - name: height_meters
+        description: "Altura en metros"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100
+      - name: weight_kg
+        description: "Peso en kilogramos"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 10000
+      - name: primary_type
+        description: "Tipo principal del pokemon. La lista accepted_values cubre las generaciones 1-7; pokemon mas nuevos pueden tener tipos como 'stellar' que aparecen como warn."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - accepted_values:
+              values: ['normal', 'fire', 'water', 'grass', 'electric', 'ice',
+                       'fighting', 'poison', 'ground', 'flying', 'psychic',
+                       'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy',
+                       'stellar', 'unknown']
+              config:
+                severity: warn
+
+  - name: stg_github_issues
+    description: "Issues de GitHub limpiados"
+    columns:
+      - name: issue_id
+        description: "ID unico del issue"
+        tests:
+          - unique
+          - not_null
+      - name: state
+        description: "Estado del issue"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['open', 'closed']
+      - name: created_at
+        tests:
+          - not_null
+
+  - name: stg_github_pull_requests
+    description: "Pull Requests de GitHub limpiados"
+    columns:
+      - name: pr_id
+        description: "ID unico del PR"
+        tests:
+          - unique
+          - not_null
+      - name: state
+        tests:
+          - accepted_values:
+              values: ['open', 'closed']
+
+  - name: stg_sessions
+    description: "Sesiones web limpiadas y estandarizadas"
+    columns:
+      - name: website_session_id
+        tests:
+          - unique
+          - not_null
+      - name: utm_source
+        tests:
+          - not_null
+      - name: device_type
+        tests:
+          - accepted_values:
+              values: ['mobile', 'desktop']
+
+  - name: stg_orders
+    description: "Ordenes limpias con margen calculado"
+    columns:
+      - name: order_id
+        tests:
+          - unique
+          - not_null
+      - name: price_usd
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 10000
+      - name: margin_usd
+        description: "Margen = price_usd - cogs_usd"
+
+  - name: stg_order_items
+    description: "Items de ordenes con margen calculado"
+    columns:
+      - name: order_item_id
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_pageviews
+    description: "Pageviews limpiados"
+    columns:
+      - name: website_pageview_id
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_refunds
+    description: "Reembolsos procesados"
+    columns:
+      - name: order_item_refund_id
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_hidro_mediciones
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          min_value: 1000
+          max_value: 1000000
+    description: |
+      Mediciones hidrometricas unificadas (Itabo Guazu + Pozuelo Puente),
+      parseadas desde el JSON crudo del API institucional. Cadencia ~20 min.
+
+      LIMPIEZA APLICADA en esta capa (trazabilidad de datos):
+        - Las lecturas crudas se preservan en columnas *_raw
+        - Las lecturas validas (dentro de rango fisicamente plausible) se
+          exponen en columnas tipadas (nivel_m, ph, etc.)
+        - Los valores fuera de rango se convierten a NULL
+        - Un flag is_outlier_* indica si el dato crudo existia pero fue
+          descartado, permitiendo cuantificar la calidad en mart_hidro_calidad
+
+      Rangos validos:
+        - nivel_m              : [0, 30]   metros
+        - conductividad_us_cm  : [0, 2000] uS/cm
+        - ph                   : [4, 10]   adimensional (rango agua natural)
+        - turbidez_ntu         : [0, 3000] NTU
+        - od_mg_l              : [0, 15]   mg/L (saturacion teorica ~14)
+        - temp_agua_c          : [5, 40]   grados Celsius
+    columns:
+      - name: estacion
+        description: "Nombre legible de la estacion de medicion"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Itabó Guazú', 'Pozuelo Puente']
+      - name: estacion_codigo
+        description: "Codigo interno de la estacion (itabo_guazu | pozuelo_puente)"
+        tests:
+          - not_null
+      - name: fecha_medicion
+        description: "Timestamp de la medicion (parseado, sin sufijo PYST)"
+        tests:
+          - not_null
+      - name: nivel_m
+        description: "Nivel del agua en metros"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 50
+              row_condition: "nivel_m is not null"
+      - name: conductividad_us_cm
+        description: "Conductividad electrica en microsiemens por centimetro"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 5000
+              row_condition: "conductividad_us_cm is not null"
+              config:
+                severity: warn
+      - name: ph
+        description: "pH del agua (escala teorica 0-14). En sensores reales aparecen lecturas espurias por descalibracion: se documentan como warnings, no como errores."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 14
+              row_condition: "ph is not null"
+              config:
+                severity: warn
+      - name: turbidez_ntu
+        description: "Turbidez en NTU. Los valores muy altos corresponden a eventos de crecida (lluvias intensas que arrastran sedimentos): se marcan como warning para investigacion posterior."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 5000
+              row_condition: "turbidez_ntu is not null"
+              config:
+                severity: warn
+      - name: od_mg_l
+        description: "Oxigeno disuelto en mg/L. Sensores con falla de calibracion pueden reportar valores fuera de rango fisico (0-20): se documentan como warnings."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 20
+              row_condition: "od_mg_l is not null"
+              config:
+                severity: warn
+      - name: temp_agua_c
+        description: "Temperatura del agua en grados Celsius"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 50
+              row_condition: "temp_agua_c is not null"

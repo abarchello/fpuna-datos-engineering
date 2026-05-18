@@ -1,0 +1,48 @@
+# ─── Credenciales y secretos ──────────────────────────────────────────────────
+.env
+*.env
+
+# ─── Artefactos de dbt ────────────────────────────────────────────────────────
+dbt/target/
+dbt/dbt_packages/
+dbt_packages/
+dbt/logs/
+dbt/package-lock.yml
+
+# ─── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+.venv/
+
+# ─── Archivos temporales de Office (lock files cuando un docx está abierto) ───
+~$*
+
+# ─── IDEs ─────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+.DS_Store
+
+# ─── Notas internas y documentos personales (no se comparten) ─────────────────
+README_INTERNO.md
+PRD_CONTEXTO_OPUS.md
+AUDITORIA_COMPLETA_*.docx
+EXPLICACION_PROYECTO_*.docx
+GUIA_PROYECTO_COMPLETO_*.docx
+Tarea_4_ENTREGABLE_*.docx
+Tarea_7_ENTREGABLE_*.docx
+Pasos_Tarea4_*.docx
+Pasos_Tarea7_*.docx
+Guion_Video_*.docx
+Reporte_Tecnico_*.docx
+Resumen_Noche_*.docx
+*.docx
+# Excepcion: docs/ es documentacion explicita y SI se versiona
+!docs/
+!docs/*.docx
+!docs/*.md
+generar_*.py
+
+imagenes_tarea4_extraidas/
+
+# Metabase plugins y datos locales
+metabase-plugins/
