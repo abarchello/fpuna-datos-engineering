@@ -11,7 +11,7 @@
   Reglas de limpieza aplicadas (valores fuera de rango -> NULL):
     nivel_m              : valido en [0, 30] m
     conductividad_us_cm  : valido en [0, 2000] uS/cm
-    ph                   : valido en [4, 10]   (rango realista agua natural)
+    ph                   : valido en [0, 14]   (rango del ph)
     turbidez_ntu         : valido en [0, 3000] NTU
     od_mg_l              : valido en [0, 15]   (saturacion teorica ~14)
     temp_agua_c          : valido en [5, 40]   grados C
